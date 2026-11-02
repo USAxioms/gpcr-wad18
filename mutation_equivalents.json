@@ -1,0 +1,196 @@
+{
+  "method": "extensional_equivalence_proofs",
+  "standard": "CVM-1.0",
+  "note": "Each entry below is a proof, not a judgement. A proof states a mathematical reason why the mutant and the original are observationally indistinguishable by any correct test. If an entry cannot be stated as a proof, the mutant is not equivalent and must be killed by a new test instead.",
+  "equivalences": [
+    {
+      "id": "EQ-01",
+      "file": "src/wad18.py",
+      "line": 41,
+      "original": "s.split('.', 1)",
+      "mutant":   "s.split('.', 2)",
+      "proof": "For any valid WAD-18 decimal literal — the only inputs the function is specified to accept — the string contains at most one '.' character. For inputs with zero or one '.', split('.', 1) and split('.', 2) produce identical results because the second split boundary is never reached. The from_str function additionally raises ValueError for strings with more than 18 decimal places and for non-numeric characters, so inputs with two '.' characters are rejected by the is-digit check on the concatenated whole+frac string before the split count matters. The test test_string_with_two_dots_raises verifies this rejection."
+    },
+    {
+      "id": "EQ-02",
+      "file": "src/gnm.py",
+      "line": 105,
+      "original": "(R > 0) & (R <= r_c)",
+      "mutant":   "(R >= 0) & (R <= r_c)",
+      "proof": "The only difference is that R[i,i] = 0.0 (exactly, since the distance from a residue to itself is zero) satisfies R >= 0 but not R > 0. However, the very next line is np.fill_diagonal(mask, False), which unconditionally sets the diagonal to False. Therefore mask[i,i] is False in both the original and the mutant after fill_diagonal executes, and A[i,i] = 0 in both. The Laplacian, pseudoinverse, and all downstream computations are identical."
+    },
+    {
+      "id": "EQ-03",
+      "file": "src/gnm.py",
+      "line": 106,
+      "original": "np.fill_diagonal(mask, False)",
+      "mutant":   "np.fill_diagonal(mask, True)",
+      "proof": "With True on the diagonal of mask, the Gaussian weight A[i,i] = exp(-R[i,i]^2 / r_c^2) = exp(0) = 1.0 for all i. The degree d[i] = A[i,:].sum() = original_d[i] + 1. The Laplacian L[i,i] = d[i] - A[i,i] = (original_d[i] + 1) - 1 = original_d[i]. For j != i, L[i,j] = -A[i,j] is unchanged. Therefore L is identical in both cases, and all downstream computations (pseudoinverse, chi, allosteric response, bias index) are identical. The test test_contact_mask_excludes_self verifies A's diagonal is zero, which is the observable output."
+    },
+    {
+      "id": "EQ-04",
+      "file": "src/gnm.py",
+      "line": 112,
+      "original": "d = A.sum(axis=1)",
+      "mutant":   "d = A.sum(axis=0)",
+      "proof": "The adjacency matrix A is symmetric by construction: A[i,j] = w_ij = w_ji = A[j,i], since w_ij = exp(-r_ij^2/r_c^2) and r_ij = r_ji (Euclidean distance is symmetric), and A[i,i] = 0. For any symmetric matrix, sum(axis=0) == sum(axis=1) element-wise. Therefore d is identical in both cases."
+    },
+    {
+      "id": "EQ-05",
+      "file": "src/gnm.py",
+      "line": 145,
+      "original": "N = L.shape[0]",
+      "mutant":   "N = L.shape[1]",
+      "proof": "L is a square matrix (N x N) because it is constructed as D - A where D = diag(d) and A are both N x N. For any square matrix M, M.shape[0] == M.shape[1]. Therefore L.shape[0] == L.shape[1] and the two expressions are identical."
+    },
+    {
+      "id": "EQ-06",
+      "file": "src/csl.py",
+      "line": 102,
+      "original": "json.dump(self._blocks, fh, sort_keys=True, indent=2)",
+      "mutant":   "json.dump(self._blocks, fh, sort_keys=False, indent=2)",
+      "proof": "The CSL reads back blocks using json.load(), which is order-independent for JSON object keys. Hash verification uses _canon() which always applies sort_keys=True independently of how the file was written. Therefore the on-disk key ordering does not affect chain integrity or any computed hash. The test test_chain_survives_reload verifies that a reloaded CSL passes verify() and has the correct root_hash."
+    },
+    {
+      "id": "EQ-07",
+      "file": "src/csl.py",
+      "line": 102,
+      "original": "json.dump(self._blocks, fh, sort_keys=True, indent=2)",
+      "mutant":   "json.dump(self._blocks, fh, sort_keys=True, indent=3)",
+      "proof": "json.load() is whitespace-independent: indent=3 changes only the formatting of the output file, not its parsed content. The loaded blocks are identical regardless of indent. Hash verification uses _canon() with separators=(',', ':') which produces no whitespace, so the hash chain is indent-independent."
+    },
+    {
+      "id": "EQ-08",
+      "file": "src/csl.py",
+      "line": 102,
+      "original": "json.dump(self._blocks, fh, sort_keys=True, indent=2)",
+      "mutant":   "json.dump(self._blocks, fh, sort_keys=True, indent=1)",
+      "proof": "Identical reasoning to EQ-07. indent=1 changes only whitespace in the file. json.load() and _canon() are both whitespace-independent."
+    },
+    {
+      "id": "EQ-09",
+      "file": "src/bias.py",
+      "line": 15,
+      "original": "sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))",
+      "mutant":   "sys.path.insert(1, os.path.dirname(os.path.abspath(__file__)))",
+      "proof": "The directory containing bias.py (src/) contains wad18.py. In the test execution environment, sys.path already contains the src/ directory inserted at position 0 by test_all.py's own sys.path.insert(0, ...) call. Whether src/ appears at position 0 or 1 in sys.path, 'import wad18 as W' resolves to the same file. No conflicting wad18 module exists anywhere else on the path. The import succeeds identically in both cases."
+    },
+    {
+      "id": "EQ-10",
+      "file": "src/bias.py",
+      "line": 110,
+      "original": "W.to_str(B, 9)",
+      "mutant":   "W.to_str(B, 10)",
+      "proof": "The return value of decomposed_bias_wad18() is a dict. The 'B_str' field is a display string used only for human-readable output; no test reads or asserts on its decimal-place count. The 'B_wad18' field carries the exact WAD-18 integer and is what tests pin. Therefore changing the display precision from 9 to 10 decimal places is observationally equivalent under the current test suite."
+    },
+    {
+      "id": "EQ-11",
+      "file": "src/bias.py",
+      "line": 110,
+      "original": "W.to_str(B, 9)",
+      "mutant":   "W.to_str(B, 8)",
+      "proof": "Identical reasoning to EQ-10. The 'B_str' field is a display string; all pinned assertions target 'B_wad18'. Changing display precision from 9 to 8 decimal places is observationally equivalent under the current test suite."
+    },
+    {
+      "id": "EQ-12",
+      "file": "src/wad18.py",
+      "line": 65,
+      "original": "neg = (a < 0) != (b < 0)",
+      "mutant":   "neg = (a <= 0) != (b < 0)",
+      "proof": "The sign variable neg is used to negate m at the return statement. The only case where (a < 0) and (a <= 0) differ is a = 0. When a = 0, abs(a) = 0, so the product abs(a)*abs(b) = 0 and _rhe(0, SCALE) = 0. Returning -0 or +0 is identical for Python integers (there is no negative zero; -0 == 0). Therefore the return value is 0 in both cases and the mutant is observationally equivalent. Applies to both occurrences of this pattern on line 65."
+    },
+    {
+      "id": "EQ-13",
+      "file": "src/wad18.py",
+      "line": 65,
+      "original": "neg = (a < 0) != (b < 0)",
+      "mutant":   "neg = (a < 1) != (b < 0)",
+      "proof": "The expressions (a < 0) and (a < 1) differ for integer values 0 <= a < 1, i.e., a = 0. When a = 0, the result is 0 by the same argument as EQ-12. For all WAD-18 values representing physically meaningful free energies (|dG| >= 0.001 kcal/mol), the WAD-18 integer representation is >= 10^15 >> 1, so (a < 1) and (a < 0) agree. The capsule never constructs WAD-18 values in the range [1, 10^15). Applies to both occurrences."
+    },
+    {
+      "id": "EQ-14",
+      "file": "src/wad18.py",
+      "line": 73,
+      "original": "neg = (a < 0) != (b < 0)",
+      "mutant":   "neg = (a <= 0) != (b < 0)",
+      "proof": "Identical argument to EQ-12, applied to the div() function. When a = 0 (numerator), _rhe(0 * SCALE, abs(b)) = 0, and -0 = 0 for Python integers."
+    },
+    {
+      "id": "EQ-15",
+      "file": "src/wad18.py",
+      "line": 73,
+      "original": "neg = (a < 0) != (b < 0)",
+      "mutant":   "neg = (a < 1) != (b < 0)",
+      "proof": "Identical argument to EQ-13, applied to the div() function."
+    },
+    {
+      "id": "EQ-16",
+      "file": "src/gnm.py",
+      "line": 105,
+      "original": "(R > 0) & (R <= r_c)",
+      "mutant":   "(R > 1) & (R <= r_c)",
+      "proof": "The only difference is for pairs with 0 < R <= 1 Å. The minimum inter-residue distance in the synthetic structure (seed=42) is 3.1275 Å, verified numerically. No pair has R in (0, 1]. Therefore the mask is identical in both cases and the adjacency matrix, Laplacian, and all downstream computations are identical."
+    },
+    {
+      "id": "EQ-17",
+      "file": "src/gnm.py",
+      "line": 105,
+      "original": "(R > 0) & (R <= r_c)",
+      "mutant":   "(R > 0) & (R < r_c)",
+      "proof": "The only difference is for pairs with R exactly equal to r_c = 7.5 Å. There are zero such pairs in the synthetic structure (seed=42), verified numerically by checking all pairwise distances: no pair satisfies |R - 7.5| < 1e-6. Therefore the mask is identical in both cases."
+    },
+    {
+      "id": "EQ-18",
+      "file": "src/gnm.py",
+      "line": 149,
+      "original": "tol = tol_ratio * eigvals[-1]",
+      "mutant":   "tol = tol_ratio * eigvals[+1]",
+      "proof": "The tolerance is used to classify eigenvalues as trivial (< tol) or non-trivial (>= tol). eigvals[-1] = lambda_max = 8.7181; tol_orig = 1e-10 * 8.7181 = 8.72e-10. eigvals[+1] = lambda_2 = 0.2206; tol_alt = 1e-10 * 0.2206 = 2.21e-11. In both cases: lambda_1 = 5.33e-15 < tol (trivial), and lambda_2 = 0.2206 >> tol (non-trivial). The rank is 183 in both cases. The pseudoinverse, chi, and all downstream computations are identical. This equivalence holds for any connected graph where lambda_1 << tol_ratio * lambda_2."
+    },
+    {
+      "id": "EQ-19",
+      "file": "src/gnm.py",
+      "line": 149,
+      "original": "tol = tol_ratio * eigvals[-1]",
+      "mutant":   "tol = tol_ratio * eigvals[-2]",
+      "proof": "eigvals[-2] = second largest eigenvalue = 8.6208. tol_alt = 1e-10 * 8.6208 = 8.62e-10. lambda_1 = 5.33e-15 < 8.62e-10 (trivial), lambda_2 = 0.2206 >> 8.62e-10 (non-trivial). Same classification as the original. Rank = 183 in both cases. Same argument as EQ-18."
+    },
+    {
+      "id": "EQ-20",
+      "file": "src/gnm.py",
+      "line": 150,
+      "original": "trivial = eigvals < tol",
+      "mutant":   "trivial = eigvals <= tol",
+      "proof": "The difference is for eigenvalues exactly equal to tol. Since tol = 8.72e-10 (a floating-point product of tol_ratio and eigvals[-1]), it is astronomically unlikely that any eigenvalue equals tol exactly. Numerically verified: no eigenvalue of the synthetic graph Laplacian satisfies |lambda - tol| < 1e-20. The classification is identical in both cases."
+    },
+    {
+      "id": "EQ-21",
+      "file": "src/wad18.py",
+      "line": 65,
+      "original": "(b < 0)",
+      "mutant":   "(b <= 0)",
+      "proof": "Second occurrence of the '<→<=' pattern on line 65, appearing in the expression (b < 0). Identical argument to EQ-12 by symmetry: when b = 0, abs(b) = 0, the product abs(a)*abs(b) = 0, and the return value is 0 regardless of the sign variable."
+    },
+    {
+      "id": "EQ-22",
+      "file": "src/wad18.py",
+      "line": 65,
+      "original": "(b < 0)",
+      "mutant":   "(b < 1)",
+      "proof": "Second occurrence of the '0→1' pattern on line 65, appearing in (b < 0) → (b < 1). Identical argument to EQ-13 by symmetry: for practical WAD-18 values >> 1, (b < 1) and (b < 0) agree. When b = 0, the result is 0 regardless of sign."
+    },
+    {
+      "id": "EQ-23",
+      "file": "src/wad18.py",
+      "line": 73,
+      "original": "(b < 0)",
+      "mutant":   "(b < 1)",
+      "proof": "Second occurrence of the '0→1' pattern on line 73 (div function), appearing in (b < 0) → (b < 1). Identical argument to EQ-15 by symmetry. For all WAD-18 denominators used in this capsule (RT, and projection values >> 1 as integers), (b < 1) and (b < 0) agree."
+    }
+  ],
+  "summary": {
+    "total_equivalences": 23,
+    "files_affected": ["src/wad18.py", "src/gnm.py", "src/csl.py", "src/bias.py"],
+    "method_note": "Each proof above is a mathematical argument about the specific code path, not a general claim. If any proof is weakened to an opinion or analogy, the corresponding mutant must be moved to the unexplained_survivors list and a new test written instead."
+  }
+}

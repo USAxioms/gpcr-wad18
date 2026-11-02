@@ -1,0 +1,33 @@
+{
+  "artifacts": [
+    {
+      "path": "audit/csl_ledger.json",
+      "sha256": "e19001306b408647b0d47432cf5dfc2e5480871bed11b412e22a626b777bfbb4"
+    },
+    {
+      "path": "src/bias.py",
+      "sha256": "25fa29eabf2fcec51cc3352f14c11311057372d4d5ba6de9d556b43a920bc94a"
+    },
+    {
+      "path": "src/csl.py",
+      "sha256": "9f9c3910e7c4b564b5545e84f91fde999f2820e28b929aaf081d38b9f3671aa0"
+    },
+    {
+      "path": "src/gnm.py",
+      "sha256": "6ae6636431d65c309770fcb20424374ec992ce702a583829a34d47aeabb01e1c"
+    },
+    {
+      "path": "src/pipeline.py",
+      "sha256": "e617249267dfea60b4c105882e0124a3584cfa996cae39f9d513a97b75235578"
+    },
+    {
+      "path": "src/wad18.py",
+      "sha256": "6fbd3964026c240392fbb16313a802a134119c43f3ee3c728df1d19228a8d831"
+    },
+    {
+      "path": "tests/test_all.py",
+      "sha256": "2654300434f9d5d6a40910118e11041c4f7fdbb119529dcef85c965b7b1cacf5"
+    }
+  ],
+  "capsule_root": "/home/claude/gpcr-ace"
+}
